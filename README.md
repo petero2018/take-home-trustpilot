@@ -203,7 +203,7 @@ make docker-data-build
 make DOCKER_REPOSITORY=ghcr.io/me \
      DOCKER_DATA_IMAGE_NAME=tp-data \
      DOCKER_DATA_IMAGE_TAG=latest \
-     PYTHON_VERSION=3.13 \
+     PYTHON_VERSION=3.13.7 \
      PYTHON_FLAVOUR=slim \
      docker-data-build
 
