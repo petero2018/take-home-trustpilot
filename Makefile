@@ -131,7 +131,7 @@ docker-api-serve:
 	-@$(DOCKER) rm -f tp_api_container >/dev/null 2>&1 || true
 	@echo "Starting API container $(DOCKER_API_IMAGE) on port 8000"
 	$(DOCKER) run -it --name tp_api_container \
-		-p 8000:8000 \
+		-p 127.0.0.1:8000:8000 \
 		-e TP_API_ENV=$(API_ENV) \
 		-e TP_API_DUCKDB_PATH=$(if $(API_DUCKDB_PATH),$(API_DUCKDB_PATH),/app/data/prod.duckdb) \
 		-e TP_API_DUCKDB_SCHEMA=$(API_DUCKDB_SCHEMA) \
