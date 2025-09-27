@@ -187,6 +187,9 @@ make dbt-docs      # generate + serve dbt docs (defaults to port 8001)
 make docker-data-build  # build the dbt container image
 make docker-data-login  # run the dbt image and cd into /app/tp_data_project
 make docker-data-shell  # drop into a shell inside the freshly built image
+make docker-api-build   # build the FastAPI container image
+make docker-api-serve   # run the FastAPI image, binding to localhost:8000
+make docker-api-shell   # drop into a shell inside the FastAPI image
 ```
 
 These targets assume `poetry` is on your PATH.
@@ -213,12 +216,20 @@ make docker-data-login
 make docker-data-login DBT_TARGET=prod
 docker exec -it tp_data_container poetry --directory tp_data_project run dbt test --target prod
 docker stop tp_data_container
+
+# Build and run the API image
+make docker-api-build
+make docker-api-serve                          # binds to localhost:8000
+make API_ENV=dev API_DUCKDB_PATH=/app/data/dev.duckdb docker-api-serve
+make docker-api-shell                          # drop into the API container for debugging
 ```
 
 The build context must be the repository root (the Makefile enforces this). Update
 `TP_DBT_DEV_PATH` / `TP_DBT_PROD_PATH` when running containers so the dbt profile resolves
 the correct DuckDB files. Similar environment overrides apply when composing for
-production.
+production. The API container honours the same environment variables documented above;
+override `API_ENV`, `API_DUCKDB_PATH`, or others on the `make docker-api-serve` command to
+point at alternative DuckDB locations.
 
 ## DuckDB storage
 
