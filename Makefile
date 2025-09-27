@@ -26,13 +26,14 @@ TP_DBT_DEFAULT_TARGET ?= prod
 .DEFAULT_GOAL := help
 SHELL := bash
 
-.PHONY: help install-api install-data api-serve dbt-build dbt-test dbt-docs docker-data-build docker-data-shell docker-data-login docker-api-build docker-api-serve docker-api-shell
+.PHONY: help install-api install-data api-serve api-test dbt-build dbt-test dbt-docs docker-data-build docker-data-shell docker-data-login docker-api-build docker-api-serve docker-api-shell
 
 help:
 	@echo "Available targets:"
 	@echo "  install-api            Install API project dependencies"
 	@echo "  install-data           Install dbt project dependencies"
 	@echo "  api-serve              Run FastAPI (override with API_ENV=dev, etc.)"
+	@echo "  api-test               Run tp_api_project test suite"
 	@echo "  dbt-build              Run dbt build (override DBT_TARGET=prod)"
 	@echo "  dbt-test               Run dbt test (override DBT_TARGET=prod)"
 	@echo "  dbt-docs               Generate + serve dbt docs (DBT_DOCS_PORT=...)"
@@ -59,6 +60,9 @@ api-serve: export TP_API_DB_POOL_TIMEOUT=$(API_DB_POOL_TIMEOUT)
 api-serve: export TP_API_LOG_LEVEL=$(API_LOG_LEVEL)
 api-serve:
 	$(POETRY) --directory tp_api_project run uvicorn app.main:app --reload
+
+api-test:
+	$(POETRY) --directory tp_api_project run pytest
 
 dbt-build:
 	$(POETRY) --directory tp_data_project run dbt build --target $(DBT_TARGET)
