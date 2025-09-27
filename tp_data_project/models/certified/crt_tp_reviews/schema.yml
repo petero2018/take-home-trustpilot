@@ -36,8 +36,9 @@ models:
         description: "Rating given by the reviewer, constrained to 1–5"
         tests:
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
-              quote: false
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
 
       - name: review_ip_address
         description: "IP address from which the review was submitted (trimmed)"

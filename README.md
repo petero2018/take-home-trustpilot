@@ -129,8 +129,18 @@ Execute dbt commands through the project environment, e.g.:
 
 ```bash
 poetry --directory tp_data_project run dbt seed   # ingest the CSV into DuckDB
-poetry --directory tp_data_project run dbt build  # transform / model if needed
-poetry --directory tp_data_project run dbt test
+poetry --directory tp_data_project run dbt build --target dev
+poetry --directory tp_data_project run dbt build --target prod
+poetry --directory tp_data_project run dbt test --target dev
+```
+
+Set `--target prod` (or any profile target defined in `profiles.yml`) to run against a
+different environment. The Makefile mirrors this behaviour via the `DBT_TARGET` variable:
+
+```bash
+make dbt-build                    # default target is 'dev'
+make DBT_TARGET=prod dbt-build     # run dbt build against prod
+make DBT_TARGET=prod dbt-test
 ```
 
 Generate interactive dbt docs:
@@ -150,8 +160,7 @@ A lightweight `Makefile` wraps the most common commands:
 make install-api   # poetry install inside tp_api_project
 make install-data  # poetry install inside tp_data_project
 make api-serve     # start the FastAPI app via uvicorn
-make dbt-run       # dbt run inside tp_data_project
-make dbt-test      # dbt test inside tp_data_project
+make dbt-build     # dbt seed & run & test inside tp_data_project
 ```
 
 These targets assume `poetry` is on your PATH.

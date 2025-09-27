@@ -1,3 +1,14 @@
+with ranked_reviews as (
+    select
+        *,
+        row_number() over (
+            partition by review_id
+            order by review_date desc nulls last, reviewer_id, business_id
+        ) as review_rank
+    from {{ ref('stg_tp_reviews') }}
+    where review_id is not null
+)
+
 select
     review_id,
     reviewer_id,
@@ -18,5 +29,5 @@ select
     upper(nullif(trim(reviewer_country), '')) as reviewer_country,
 
     review_date
-from {{ ref('stg_tp_reviews') }}
-where review_id is not null
+from ranked_reviews
+where review_rank = 1
