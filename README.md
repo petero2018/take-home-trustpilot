@@ -93,6 +93,10 @@ poetry --directory tp_api_project run uvicorn app.main:app --reload
 Environment variables:
 
 - `TP_API_ENV`, `TP_API_DUCKDB_PATH`, `TP_API_DUCKDB_READ_ONLY` (see above) control runtime configuration.
+- `TP_API_DB_BACKEND` – database adapter (currently `duckdb` only, defaults to `duckdb`).
+- `TP_API_DB_POOL_SIZE` – number of DuckDB connections kept in the pool (default `5`).
+- `TP_API_DB_POOL_TIMEOUT` – seconds to wait for a pooled connection before timing out (default `5.0`).
+- `TP_API_LOG_LEVEL` – optional Python logging level (e.g. `DEBUG`, `INFO`).
 - `DUCKDB_PATH` remains a supported override for `TP_API_DUCKDB_PATH` if you prefer the older name.
 
 #### Documentation
@@ -121,6 +125,14 @@ Run tests:
 
 ```bash
 poetry --directory tp_api_project run pytest
+```
+
+The Makefile helpers let you switch API environments without editing code:
+
+```bash
+make api-serve                                    # serve using prod defaults
+make API_ENV=dev API_DUCKDB_PATH=../data/dev.duckdb API_DUCKDB_READ_ONLY=false api-serve
+make API_ENV=prod API_DUCKDB_PATH=../data/prod.duckdb api-serve
 ```
 
 ### Data project
@@ -159,8 +171,10 @@ A lightweight `Makefile` wraps the most common commands:
 ```bash
 make install-api   # poetry install inside tp_api_project
 make install-data  # poetry install inside tp_data_project
-make api-serve     # start the FastAPI app via uvicorn
-make dbt-build     # dbt seed & run & test inside tp_data_project
+make api-serve     # start the FastAPI app via uvicorn (defaults to prod)
+make dbt-build     # dbt build inside tp_data_project (target=dev by default)
+make dbt-test      # dbt test inside tp_data_project (target=dev by default)
+make dbt-docs      # generate + serve dbt docs (defaults to port 8001)
 ```
 
 These targets assume `poetry` is on your PATH.
