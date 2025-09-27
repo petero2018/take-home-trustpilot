@@ -26,12 +26,15 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy Poetry project files and install dependencies
-COPY . .
+COPY tp_data_project/pyproject.toml tp_data_project/poetry.lock* ./tp_data_project/
 
 ENV DBT_PROFILES_DIR=/app/tp_data_project/local_dbt_profiles
 
-# Project initialization:
-RUN poetry install
+# Install data project dependencies
+RUN poetry --directory tp_data_project install --no-root
+
+# Copy the rest of the repository
+COPY . .
 
 # Default command to keep the container running (for testing)
 CMD ["tail", "-f", "/dev/null"]

@@ -162,6 +162,15 @@ poetry --directory tp_data_project run dbt docs generate
 poetry --directory tp_data_project run dbt docs serve --port 8001  # visit http://127.0.0.1:8001
 ```
 
+The dbt profile (in `tp_data_project/local_dbt_profiles/profiles.yml`) now resolves DuckDB
+paths from environment variables, defaulting to `../data/*.duckdb`. If you store the
+database elsewhere, export `TP_DBT_DEV_PATH` / `TP_DBT_PROD_PATH` before invoking dbt or
+override them in the Makefile call, e.g.:
+
+```bash
+TP_DBT_PROD_PATH=/mnt/shared/prod.duckdb make DBT_TARGET=prod dbt-build
+```
+
 The dbt project reads and writes tables inside the same DuckDB file referenced by the API.
 
 ## Makefile helpers
@@ -175,9 +184,41 @@ make api-serve     # start the FastAPI app via uvicorn (defaults to prod)
 make dbt-build     # dbt build inside tp_data_project (target=dev by default)
 make dbt-test      # dbt test inside tp_data_project (target=dev by default)
 make dbt-docs      # generate + serve dbt docs (defaults to port 8001)
+make docker-data-build  # build the dbt container image
+make docker-data-login  # run the dbt image and cd into /app/tp_data_project
+make docker-data-shell  # drop into a shell inside the freshly built image
 ```
 
 These targets assume `poetry` is on your PATH.
+
+### Docker images
+
+Build the dbt image (defaults shown in the Makefile):
+
+```bash
+make docker-data-build
+make DOCKER_REPOSITORY=ghcr.io/me \
+     DOCKER_DATA_IMAGE_NAME=tp-data \
+     DOCKER_DATA_IMAGE_TAG=latest \
+     PYTHON_VERSION=3.13 \
+     PYTHON_FLAVOUR=slim \
+     docker-data-build
+
+# Explore the container with environment overrides if needed
+TP_DBT_PROD_PATH=/mnt/shared/prod.duckdb make docker-data-shell
+# Clean and reuse a named container that drops you into /app/tp_data_project
+make docker-data-login
+
+# Example of running a one-off dbt command within the container via login target
+make docker-data-login DBT_TARGET=prod
+docker exec -it tp_data_container poetry --directory tp_data_project run dbt test --target prod
+docker stop tp_data_container
+```
+
+The build context must be the repository root (the Makefile enforces this). Update
+`TP_DBT_DEV_PATH` / `TP_DBT_PROD_PATH` when running containers so the dbt profile resolves
+the correct DuckDB files. Similar environment overrides apply when composing for
+production.
 
 ## DuckDB storage
 
