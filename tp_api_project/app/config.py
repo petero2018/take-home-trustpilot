@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 from functools import lru_cache
 import os
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 _DEFAULT_DB_PATHS: dict[str, str] = {
     "dev": "../data/dev.duckdb",
@@ -43,15 +44,16 @@ def _to_float(value: str | None, default: float) -> float:
         return default
 
 
-@dataclass(frozen=True)
-class Settings:
+class Settings(BaseModel):
     environment: Literal["dev", "prod"]
     duckdb_path: str
     duckdb_read_only: bool
     duckdb_schema: str | None
-    database_backend: str
-    connection_pool_size: int
-    connection_pool_timeout: float
+    database_backend: str = "duckdb"
+    connection_pool_size: int = Field(default=5, ge=1)
+    connection_pool_timeout: float = Field(default=5.0, gt=0)
+
+    model_config = ConfigDict(frozen=True)
 
 
 @lru_cache(maxsize=1)

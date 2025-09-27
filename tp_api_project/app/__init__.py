@@ -7,5 +7,6 @@ __all__ = [
     "logging_config",
     "main",
     "queries",
+    "schemas",
     "utils",
 ]

@@ -93,3 +93,12 @@ def test_user_info_success(client: TestClient) -> None:
         "reviewer_id,reviewer_name,email_address,reviewer_country\r\n"
         "user-1,Alice,alice@example.com,UK\r\n"
     )
+
+
+def test_reviews_by_business_validation_error(client: TestClient) -> None:
+    response = client.get(
+        "/reviews/by-business",
+        params={"business_id": "biz-1", "limit": 0},
+    )
+
+    assert response.status_code == 422
