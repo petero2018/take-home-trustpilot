@@ -30,16 +30,20 @@ SHELL := bash
 
 help:
 	@echo "Available targets:"
+	
 	@echo "  install-api            Install API project dependencies"
-	@echo "  install-data           Install dbt project dependencies"
 	@echo "  api-serve              Run FastAPI (override with API_ENV=dev, etc.)"
 	@echo "  api-test               Run tp_api_project test suite"
+
+	@echo "  install-data           Install dbt project dependencies"
 	@echo "  dbt-build              Run dbt build (override DBT_TARGET=prod)"
 	@echo "  dbt-test               Run dbt test (override DBT_TARGET=prod)"
 	@echo "  dbt-docs               Generate + serve dbt docs (DBT_DOCS_PORT=...)"
+
 	@echo "  docker-data-build      Build the dbt Docker image"
 	@echo "  docker-data-shell      Run an interactive shell in the dbt image"
 	@echo "  docker-data-login      Run/reuse a named dbt container"
+
 	@echo "  docker-api-build       Build the API Docker image"
 	@echo "  docker-api-serve       Run the API image (bind to port 8000)"
 	@echo "  docker-api-shell       Run an interactive shell in the API image"
