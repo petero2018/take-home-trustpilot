@@ -1,0 +1,41 @@
+version: 2
+
+seeds:
+  - name: tp_reviews
+    description: "Trustpilot reviews dataset"
+    columns:
+      - name: Review Id
+        data_type: varchar
+
+      - name: Reviewer Name
+        data_type: varchar
+
+      - name: Review Title
+        data_type: varchar
+
+      - name: Review Rating
+        data_type: integer
+
+      - name: Review Content
+        data_type: varchar
+
+      - name: Review IP Address
+        data_type: varchar
+
+      - name: Business Id
+        data_type: varchar
+
+      - name: Business Name
+        data_type: varchar
+
+      - name: Reviewer Id
+        data_type: varchar
+
+      - name: Email Address
+        data_type: varchar
+
+      - name: Reviewer Country
+        data_type: varchar
+
+      - name: Review Date
+        data_type: date
