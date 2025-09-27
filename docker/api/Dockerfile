@@ -33,8 +33,9 @@ COPY tp_api_project/pyproject.toml tp_api_project/poetry.lock* ./tp_api_project/
 # Install API project dependencies (without installing the project itself)
 RUN poetry --directory tp_api_project install --no-root
 
-# Copy the rest of the repository (application code, data, etc.)
-COPY . .
+# Copy application code and shared assets
+COPY tp_api_project/ ./tp_api_project/
+COPY data/ ./data/
 
 # Expose HTTP port
 EXPOSE 8000

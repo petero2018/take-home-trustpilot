@@ -1,0 +1,16 @@
+.git
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.sqlite
+**/*.db
+**/*.duckdb
+**/*.log
+**/*.tmp
+**/.DS_Store
+**/.pytest_cache
+node_modules
+.env
+logs
+__pycache__
+.DS_Store

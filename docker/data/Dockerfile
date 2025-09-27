@@ -33,8 +33,9 @@ ENV DBT_PROFILES_DIR=/app/tp_data_project/local_dbt_profiles
 # Install data project dependencies
 RUN poetry --directory tp_data_project install --no-root
 
-# Copy the rest of the repository
-COPY . .
+# Copy only the data project and any shared assets it needs
+COPY tp_data_project/ ./tp_data_project/
+COPY data/ ./data/
 
 # Default command to keep the container running (for testing)
 CMD ["tail", "-f", "/dev/null"]
