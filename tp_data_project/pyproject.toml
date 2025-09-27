@@ -1,15 +1,14 @@
 [tool.poetry]
-name = "take-home-trustpilot"
+name = "tp-data-project"
 version = "0.1.0"
-description = "Trustpilot take-home workspace"
+description = "Trustpilot take-home dbt project"
 authors = ["Peter Osztodi <osztodipeter@gmail.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.13"
-
-[tool.poetry.workspace]
-members = ["tp_api_project", "tp_data_project"]
+dbt-core = "^1.10.13"
+dbt-duckdb = "^1.9.6"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -1,15 +1,19 @@
 [tool.poetry]
-name = "take-home-trustpilot"
+name = "tp-api-project"
 version = "0.1.0"
-description = "Trustpilot take-home workspace"
+description = "Trustpilot take-home REST API"
 authors = ["Peter Osztodi <osztodipeter@gmail.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.13"
+fastapi = "^0.117.1"
+uvicorn = "^0.37.0"
+duckdb = "^1.4.0"
 
-[tool.poetry.workspace]
-members = ["tp_api_project", "tp_data_project"]
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+httpx = "^0.28.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
