@@ -17,6 +17,33 @@ from .utils import stream_csv
 app = FastAPI(title="Trustpilot Take-Home API")
 logger = get_logger(__name__)
 
+CSV_STREAMING_RESPONSES = {
+    200: {
+        "description": "CSV stream",
+        "content": {
+            "text/csv": {
+                "schema": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV formatted response",
+                }
+            }
+        },
+    },
+    404: {
+        "model": ErrorResponse,
+        "description": "No matching records",
+    },
+    500: {
+        "model": ErrorResponse,
+        "description": "Database access error",
+    },
+    503: {
+        "model": ErrorResponse,
+        "description": "Database unavailable",
+    },
+}
+
 
 def _business_query_params(
     business_id: Annotated[str, Query(min_length=1)] ,
@@ -70,7 +97,11 @@ async def handle_data_access_error(
     )
 
 
-@app.get("/reviews/by-business")
+@app.get(
+    "/reviews/by-business",
+    response_class=StreamingResponse,
+    responses=CSV_STREAMING_RESPONSES,
+)
 def reviews_by_business(
     params: Annotated[BusinessReviewsQuery, Depends(_business_query_params)]
 ) -> StreamingResponse:
@@ -80,7 +111,11 @@ def reviews_by_business(
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")
 
 
-@app.get("/reviews/by-user")
+@app.get(
+    "/reviews/by-user",
+    response_class=StreamingResponse,
+    responses=CSV_STREAMING_RESPONSES,
+)
 def reviews_by_user(
     params: Annotated[UserReviewsQuery, Depends(_user_query_params)]
 ) -> StreamingResponse:
@@ -90,7 +125,11 @@ def reviews_by_user(
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")
 
 
-@app.get("/users/{user_id}")
+@app.get(
+    "/users/{user_id}",
+    response_class=StreamingResponse,
+    responses=CSV_STREAMING_RESPONSES,
+)
 def user_info(user_id: str) -> StreamingResponse:
     rows, header = queries.get_user_info(user_id)
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")

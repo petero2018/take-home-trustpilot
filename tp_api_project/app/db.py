@@ -7,6 +7,7 @@ import duckdb
 from duckdb import DuckDBPyConnection
 
 from .config import get_settings
+from .exceptions import DataAccessError
 
 
 class DuckDBConnectionPool:
@@ -48,7 +49,14 @@ class DuckDBConnectionPool:
                         connection = self._initialize_connection()
                         self._active_connections += 1
                     else:
-                        connection = self._queue.get(timeout=self._timeout)
+                        try:
+                            connection = self._queue.get(timeout=self._timeout)
+                        except Empty as exc:
+                            raise DataAccessError(
+                                "No database connections are available. Please try again shortly.",
+                                context={"timeout": self._timeout},
+                                status_code=503,
+                            ) from exc
             yield connection
         finally:
             if connection is None:
