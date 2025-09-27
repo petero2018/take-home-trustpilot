@@ -3,13 +3,10 @@ name = "take-home-trustpilot"
 version = "0.1.0"
 description = "Trustpilot take-home workspace"
 authors = ["Peter Osztodi <osztodipeter@gmail.com>"]
-package-mode = false
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.13"
-
-[tool.poetry.workspace]
-members = ["tp_api_project", "tp_data_project"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

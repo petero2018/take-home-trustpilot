@@ -25,12 +25,33 @@ def _to_bool(value: str | None, default: bool) -> bool:
     return default
 
 
+def _to_int(value: str | None, default: int) -> int:
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _to_float(value: str | None, default: float) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     environment: Literal["dev", "prod"]
     duckdb_path: str
     duckdb_read_only: bool
     duckdb_schema: str | None
+    database_backend: str
+    connection_pool_size: int
+    connection_pool_timeout: float
 
 
 @lru_cache(maxsize=1)
@@ -57,9 +78,20 @@ def get_settings() -> Settings:
     if duckdb_schema is None:
         duckdb_schema = _DEFAULT_SCHEMAS.get(environment)
 
+    raw_backend = os.getenv("TP_API_DB_BACKEND")
+    database_backend = (
+        raw_backend.strip().lower() if raw_backend and raw_backend.strip() else "duckdb"
+    )
+
+    pool_size = max(1, _to_int(os.getenv("TP_API_DB_POOL_SIZE"), 5))
+    pool_timeout = max(0.1, _to_float(os.getenv("TP_API_DB_POOL_TIMEOUT"), 5.0))
+
     return Settings(
         environment=environment,
         duckdb_path=duckdb_path,
         duckdb_read_only=duckdb_read_only,
         duckdb_schema=duckdb_schema,
+        database_backend=database_backend,
+        connection_pool_size=pool_size,
+        connection_pool_timeout=pool_timeout,
     )

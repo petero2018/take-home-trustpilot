@@ -65,13 +65,17 @@ Key variables:
 - `TP_API_DUCKDB_PATH` – explicit path to the DuckDB database.
 - `TP_API_DUCKDB_READ_ONLY` – `true|false`; defaults to `true` when `TP_API_ENV=prod`.
 - `TP_API_DUCKDB_SCHEMA` – optional explicit schema; omit to auto-detect.
+- `TP_API_DB_BACKEND` – database adapter (currently `duckdb` only, defaults to `duckdb`).
+- `TP_API_DB_POOL_SIZE` – number of DuckDB connections kept in the pool (default `5`).
+- `TP_API_DB_POOL_TIMEOUT` – seconds to wait for a pooled connection before timing out (default `5.0`).
+- `TP_API_LOG_LEVEL` – optional Python logging level (e.g. `DEBUG`, `INFO`).
 
 The legacy `DUCKDB_PATH` variable is also honoured for compatibility.
 
-By default the service connects to `../data/prod.duckdb` in read-only mode. If no schema is
-provided it will auto-detect where the tables live. Set `TP_API_ENV=dev` (and optionally
-`TP_API_DUCKDB_PATH` or `TP_API_DUCKDB_SCHEMA`) if you want to work with a development
-database instead.
+By default the service connects to `../data/prod.duckdb` in read-only mode and manages a
+small DuckDB connection pool. If no schema is provided it will auto-detect where the tables
+live. Set `TP_API_ENV=dev` (and optionally `TP_API_DUCKDB_PATH`, `TP_API_DUCKDB_SCHEMA`, or
+pool settings) if you want to work with a development database instead.
 
 ### API project
 
@@ -133,7 +137,7 @@ Generate interactive dbt docs:
 
 ```bash
 poetry --directory tp_data_project run dbt docs generate
-poetry --directory tp_data_project run dbt docs serve  # visit http://127.0.0.1:8000 to browse
+poetry --directory tp_data_project run dbt docs serve --port 8001  # visit http://127.0.0.1:8001
 ```
 
 The dbt project reads and writes tables inside the same DuckDB file referenced by the API.

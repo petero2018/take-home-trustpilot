@@ -14,6 +14,7 @@ duckdb = "^1.4.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"
 httpx = "^0.28.1"
+mockito = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
