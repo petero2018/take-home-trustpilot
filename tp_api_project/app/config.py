@@ -58,6 +58,7 @@ class Settings(BaseModel):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    """Construct and cache application settings derived from environment variables."""
     environment = os.getenv("TP_API_ENV", "prod").strip().lower() or "prod"
     if environment not in ("dev", "prod"):
         environment = "prod"

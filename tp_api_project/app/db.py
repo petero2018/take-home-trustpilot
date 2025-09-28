@@ -1,3 +1,5 @@
+"""Connection pooling and DuckDB helpers for the Trustpilot API."""
+
 import threading
 from contextlib import contextmanager
 from queue import Empty, Queue
@@ -11,6 +13,8 @@ from .exceptions import DataAccessError
 
 
 class DuckDBConnectionPool:
+    """A lightweight thread-safe pool that recycles DuckDB connections."""
+
     def __init__(
         self,
         database_path: str,
@@ -19,6 +23,7 @@ class DuckDBConnectionPool:
         max_size: int,
         timeout: float,
     ) -> None:
+        """Capture configuration and seed the internal state."""
         self._database_path = database_path
         self._read_only = read_only
         self._schema = (schema or "").strip() or None
@@ -28,6 +33,7 @@ class DuckDBConnectionPool:
         self._active_connections = 0
 
     def _initialize_connection(self) -> DuckDBPyConnection:
+        """Open a new DuckDB connection respecting the configured schema."""
         connection = duckdb.connect(
             self._database_path,
             read_only=self._read_only,
@@ -39,6 +45,7 @@ class DuckDBConnectionPool:
 
     @contextmanager
     def acquire(self) -> Iterator[DuckDBPyConnection]:
+        """Yield a pooled connection, blocking up to the configured timeout."""
         connection: Optional[DuckDBPyConnection] = None
         try:
             try:
@@ -78,11 +85,13 @@ _POOL_LOCK = threading.Lock()
 
 
 def _quote_identifier(identifier: str) -> str:
+    """Return a DuckDB-safe quoted identifier."""
     return f'"{identifier.replace("\"", "\"\"")}"'
 
 
 @contextmanager
 def get_connection() -> Iterator[DuckDBPyConnection]:
+    """Obtain a pooled DuckDB connection based on application settings."""
     settings = get_settings()
     if settings.database_backend != "duckdb":
         raise NotImplementedError(f"Unsupported database backend '{settings.database_backend}'.")
@@ -112,6 +121,7 @@ def get_connection() -> Iterator[DuckDBPyConnection]:
 
 
 def qualify_table(connection: DuckDBPyConnection, table_name: str) -> str:
+    """Return a table reference qualified with the appropriate schema."""
     settings = get_settings()
     if settings.duckdb_schema:
         return f"{_quote_identifier(settings.duckdb_schema)}.{_quote_identifier(table_name)}"

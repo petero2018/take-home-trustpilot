@@ -40,6 +40,8 @@ poetry --directory tp_data_project run dbt docs serve --port 8001
 ```
 
 Visit http://127.0.0.1:8001 to browse the model catalog and lineage graph.
+The documentation also surfaces exposures that describe how the FastAPI endpoints
+depend on the certified `crt_tp_reviews` model.
 
 ## Linting
 

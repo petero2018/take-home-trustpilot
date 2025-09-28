@@ -1,0 +1,41 @@
+version: 2
+
+exposures:
+  - name: api_reviews_by_business
+    type: application
+    maturity: high
+    url: http://127.0.0.1:8000/reviews/by-business
+    description: >-
+      FastAPI endpoint that streams the certified review set for a given business as CSV.
+      Downstream analysts download this feed for ad-hoc investigations and reporting.
+    owner:
+      name: Trustpilot Data Platform
+      email: data-platform@example.com
+    depends_on:
+      - ref('crt_tp_reviews')
+
+  - name: api_reviews_by_user
+    type: application
+    maturity: high
+    url: http://127.0.0.1:8000/reviews/by-user
+    description: >-
+      FastAPI endpoint that exposes all reviews written by a single Trustpilot user.
+      Used by support tooling to triage abuse reports and respond to customer queries.
+    owner:
+      name: Trustpilot Data Platform
+      email: data-platform@example.com
+    depends_on:
+      - ref('crt_tp_reviews')
+
+  - name: api_user_info
+    type: application
+    maturity: medium
+    url: http://127.0.0.1:8000/users/{user_id}
+    description: >-
+      FastAPI endpoint that returns distinct reviewer metadata (name, email, country).
+      Enables quick lookups during fraud investigations or customer support calls.
+    owner:
+      name: Trustpilot Data Platform
+      email: data-platform@example.com
+    depends_on:
+      - ref('crt_tp_reviews')

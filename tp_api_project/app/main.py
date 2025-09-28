@@ -1,3 +1,5 @@
+"""HTTP routes and exception handlers for the Trustpilot take-home API."""
+
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Query, Request, status
@@ -50,6 +52,7 @@ def _business_query_params(
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> BusinessReviewsQuery:
+    """Normalise business review query parameters before hitting the database."""
     return BusinessReviewsQuery.model_validate(
         {"business_id": business_id, "limit": limit, "offset": offset}
     )
@@ -60,15 +63,18 @@ def _user_query_params(
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> UserReviewsQuery:
+    """Normalise user review query parameters before hitting the database."""
     return UserReviewsQuery.model_validate({"user_id": user_id, "limit": limit, "offset": offset})
 
 
 def _error_payload(message: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build the JSON error payload returned by the exception handlers."""
     return ErrorResponse(detail=message, context=context).model_dump(exclude_none=True)
 
 
 @app.exception_handler(RecordNotFoundError)
 async def handle_not_found(request: Request, exc: RecordNotFoundError) -> JSONResponse:
+    """Return a 404 response when no records match the supplied filters."""
     context = dict(exc.context or {})
     context.setdefault("path", str(request.url))
     logger.info("No records found", extra={"context": context})
@@ -80,6 +86,7 @@ async def handle_not_found(request: Request, exc: RecordNotFoundError) -> JSONRe
 
 @app.exception_handler(DataAccessError)
 async def handle_data_access_error(request: Request, exc: DataAccessError) -> JSONResponse:
+    """Convert data access failures into structured JSON responses."""
     context = dict(exc.context or {})
     context.setdefault("path", str(request.url))
     logger.error("Database operation failed", exc_info=exc, extra={"context": context})
@@ -97,6 +104,7 @@ async def handle_data_access_error(request: Request, exc: DataAccessError) -> JS
 def reviews_by_business(
     params: Annotated[BusinessReviewsQuery, Depends(_business_query_params)]
 ) -> StreamingResponse:
+    """Stream reviews for a business in reverse chronological order as CSV."""
     rows, header = queries.get_reviews_by_business(params.business_id, params.limit, params.offset)
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")
 
@@ -109,6 +117,7 @@ def reviews_by_business(
 def reviews_by_user(
     params: Annotated[UserReviewsQuery, Depends(_user_query_params)]
 ) -> StreamingResponse:
+    """Stream reviews written by a single user as CSV."""
     rows, header = queries.get_reviews_by_user(params.user_id, params.limit, params.offset)
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")
 
@@ -119,10 +128,12 @@ def reviews_by_user(
     responses=CSV_STREAMING_RESPONSES,
 )
 def user_info(user_id: str) -> StreamingResponse:
+    """Stream the distinct reviewer attributes for a single user."""
     rows, header = queries.get_user_info(user_id)
     return StreamingResponse(stream_csv(rows, header), media_type="text/csv")
 
 
 @app.get("/healthz", response_model=HealthResponse)
 def healthcheck() -> HealthResponse:
+    """Basic liveness check consumed by uptime monitors."""
     return HealthResponse(status="ok")

@@ -1,3 +1,5 @@
+"""Database access helpers that back the FastAPI review endpoints."""
+
 from contextlib import ExitStack
 from typing import Any, Iterable, Iterator, List, Tuple
 
@@ -18,6 +20,8 @@ logger = get_logger(__name__)
 def _row_iterator(
     result: duckdb.DuckDBPyRelation, stack: ExitStack, first_batch: list[Row]
 ) -> Iterator[Row]:
+    """Yield rows from a DuckDB cursor while keeping the connection alive."""
+
     def iterator() -> Iterator[Row]:
         try:
             batch = first_batch
@@ -32,6 +36,7 @@ def _row_iterator(
 
 
 def get_reviews_by_business(business_id: str, limit: int = 100, offset: int = 0) -> QueryResult:
+    """Fetch reviews for a business ordered by most recent first."""
     params = [business_id, limit, offset]
     stack = ExitStack()
     con = stack.enter_context(get_connection())
@@ -70,6 +75,7 @@ def get_reviews_by_business(business_id: str, limit: int = 100, offset: int = 0)
 
 
 def get_reviews_by_user(user_id: str, limit: int = 100, offset: int = 0) -> QueryResult:
+    """Fetch reviews authored by a single user ordered by most recent first."""
     params = [user_id, limit, offset]
     stack = ExitStack()
     con = stack.enter_context(get_connection())
@@ -108,6 +114,7 @@ def get_reviews_by_user(user_id: str, limit: int = 100, offset: int = 0) -> Quer
 
 
 def get_user_info(user_id: str) -> QueryResult:
+    """Fetch distinct reviewer metadata for the requested user."""
     params = [user_id]
     stack = ExitStack()
     con = stack.enter_context(get_connection())
