@@ -1,5 +1,5 @@
-from functools import lru_cache
 import os
+from functools import lru_cache
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -74,9 +74,7 @@ def get_settings() -> Settings:
     )
 
     raw_schema = os.getenv("TP_API_DUCKDB_SCHEMA")
-    duckdb_schema = (
-        raw_schema.strip() if raw_schema and raw_schema.strip() else None
-    )
+    duckdb_schema = raw_schema.strip() if raw_schema and raw_schema.strip() else None
     if duckdb_schema is None:
         duckdb_schema = _DEFAULT_SCHEMAS.get(environment)
 

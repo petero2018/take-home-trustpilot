@@ -85,9 +85,7 @@ def _quote_identifier(identifier: str) -> str:
 def get_connection() -> Iterator[DuckDBPyConnection]:
     settings = get_settings()
     if settings.database_backend != "duckdb":
-        raise NotImplementedError(
-            f"Unsupported database backend '{settings.database_backend}'."
-        )
+        raise NotImplementedError(f"Unsupported database backend '{settings.database_backend}'.")
 
     cache_key = (
         settings.duckdb_path,

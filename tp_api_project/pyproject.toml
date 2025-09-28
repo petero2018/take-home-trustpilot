@@ -16,6 +16,8 @@ pytest = "^8.4.2"
 httpx = "^0.28.1"
 mockito = "^1.4.0"
 ruff = "^0.7.1"
+black = "^24.10.0"
+mypy = "^1.13.0"
 
 [tool.ruff]
 target-version = "py313"
@@ -37,6 +39,19 @@ ignore = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = []
+ignore_missing_imports = true
+show_error_codes = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

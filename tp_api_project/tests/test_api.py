@@ -1,10 +1,9 @@
 import pytest
-from fastapi.testclient import TestClient
-from mockito import when, unstub
-
 from app import queries
 from app.exceptions import DataAccessError, RecordNotFoundError
 from app.main import app
+from fastapi.testclient import TestClient
+from mockito import unstub, when
 
 
 @pytest.fixture(autouse=True)

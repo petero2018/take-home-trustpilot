@@ -31,9 +31,7 @@ def _row_iterator(
     return iterator()
 
 
-def get_reviews_by_business(
-    business_id: str, limit: int = 100, offset: int = 0
-) -> QueryResult:
+def get_reviews_by_business(business_id: str, limit: int = 100, offset: int = 0) -> QueryResult:
     params = [business_id, limit, offset]
     stack = ExitStack()
     con = stack.enter_context(get_connection())

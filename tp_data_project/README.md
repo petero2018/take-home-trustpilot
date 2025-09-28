@@ -48,11 +48,11 @@ poetry --directory tp_data_project run sqlfluff lint models
 poetry --directory tp_data_project run sqlfluff fix models
 # or from the repository root
 make data-lint
-make data-fix
+make data-sqlfix
 
 # via Docker with the baked image
 make docker-data-lint
-make docker-data-fix
+make docker-data-sqlfix
 ```
 
 ## Container Workflow

@@ -52,10 +52,20 @@ make api-test
 ## Linting
 
 ```bash
+poetry --directory tp_api_project run black --check app tests
 poetry --directory tp_api_project run ruff check
-poetry --directory tp_api_project run ruff format --check
+poetry --directory tp_api_project run mypy app
 # or from repo root
 make api-lint
+
+# auto-format / import tidy
+poetry --directory tp_api_project run black app tests
+poetry --directory tp_api_project run ruff check --fix
+make api-fix
+
+# via Docker image
+make docker-api-lint
+make docker-api-fix
 ```
 
 ## Docker

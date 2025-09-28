@@ -56,4 +56,3 @@ Both projects share the DuckDB file in `data/` and are containerised for easy CI
 - `data/` – DuckDB files used by both projects.
 - `docker/` – Dockerfiles for API and dbt images.
 - `Makefile` – shortcuts for local development, testing, and container workflows.
-

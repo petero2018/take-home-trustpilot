@@ -26,28 +26,43 @@ TP_DBT_DEFAULT_TARGET ?= prod
 .DEFAULT_GOAL := help
 SHELL := bash
 
-.PHONY: help install-api install-data api-serve api-test api-lint dbt-build dbt-test dbt-docs data-lint data-fix docker-data-build docker-data-shell docker-data-login docker-data-lint docker-data-fix docker-api-build docker-api-serve docker-api-shell
+.PHONY: help install-api install-data api-serve api-test api-lint api-fix dbt-build dbt-test dbt-docs data-lint data-sqlfix docker-data-build docker-data-shell docker-data-login docker-data-lint docker-data-sqlfix docker-api-build docker-api-serve docker-api-shell docker-api-lint docker-api-fix
 
 help:
 	@echo "Available targets:"
+
+	@echo "API project local virtual env targets:"
+
 	@echo "  install-api            Install API project dependencies"
 	@echo "  api-serve              Run FastAPI (override with API_ENV=dev, etc.)"
 	@echo "  api-test               Run tp_api_project test suite"
-	@echo "  api-lint               Run Ruff lint checks for tp_api_project"
+	@echo "  api-lint               Run Black/Ruff/Mypy checks for tp_api_project"
+	@echo "  api-fix                Auto-format imports & style for tp_api_project"
+
+	@echo "Data project local virtual env targets:"
+
 	@echo "  install-data           Install dbt project dependencies"
 	@echo "  dbt-build              Run dbt build (override DBT_TARGET=prod)"
 	@echo "  dbt-test               Run dbt test (override DBT_TARGET=prod)"
 	@echo "  dbt-docs               Generate + serve dbt docs (DBT_DOCS_PORT=...)"
 	@echo "  data-lint              Run SQLFluff linting for tp_data_project"
-	@echo "  data-fix               Auto-fix SQLFluff issues for tp_data_project"
+	@echo "  data-sqlfix            Auto-fix SQLFluff issues for tp_data_project"
+
+	@echo "Data project docker container targets:"
+
 	@echo "  docker-data-build      Build the dbt Docker image"
 	@echo "  docker-data-shell      Run an interactive shell in the dbt image"
 	@echo "  docker-data-login      Run/reuse a named dbt container"
 	@echo "  docker-data-lint       Run SQLFluff inside the dbt Docker image"
-	@echo "  docker-data-fix        Auto-fix SQLFluff issues inside the dbt Docker image"
+	@echo "  docker-data-sqlfix     Auto-fix SQLFluff issues inside the dbt Docker image"
+
+	@echo "API project docker container targets:"
+
 	@echo "  docker-api-build       Build the API Docker image"
 	@echo "  docker-api-serve       Run the API image (bind to port 8000)"
 	@echo "  docker-api-shell       Run an interactive shell in the API image"
+	@echo "  docker-api-lint        Run Black/Ruff/Mypy inside the API Docker image"
+	@echo "  docker-api-fix         Auto-format using Docker image for tp_api_project"
 
 install-api:
 	$(POETRY) --directory tp_api_project install
@@ -70,8 +85,13 @@ api-test:
 	$(POETRY) --directory tp_api_project run pytest
 
 api-lint:
+	$(POETRY) --directory tp_api_project run black --check app tests
 	$(POETRY) --directory tp_api_project run ruff check
-	$(POETRY) --directory tp_api_project run ruff format --check
+	$(POETRY) --directory tp_api_project run mypy app
+
+api-fix:
+	$(POETRY) --directory tp_api_project run black app tests
+	$(POETRY) --directory tp_api_project run ruff check --fix
 
 dbt-build:
 	$(POETRY) --directory tp_data_project run dbt build --target $(DBT_TARGET)
@@ -86,7 +106,7 @@ dbt-docs:
 data-lint:
 	$(POETRY) --directory tp_data_project run sqlfluff lint models
 
-data-fix:
+data-sqlfix:
 	$(POETRY) --directory tp_data_project run sqlfluff fix models
 
 docker-data-build:
@@ -128,7 +148,7 @@ docker-data-lint: docker-data-build
 		$(DOCKER_DATA_IMAGE) \
 		poetry --directory tp_data_project run sqlfluff lint models
 
-docker-data-fix: docker-data-build
+docker-data-sqlfix: docker-data-build
 	@echo "Running SQLFluff fix inside $(DOCKER_DATA_IMAGE)"
 	$(DOCKER) run --rm \
 		-e TP_DBT_DEV_PATH=$(TP_DBT_DEV_PATH) \
@@ -160,6 +180,34 @@ docker-api-shell:
 		-e TP_API_LOG_LEVEL=$(API_LOG_LEVEL) \
 		$(DOCKER_API_IMAGE) \
 		bash
+
+docker-api-lint: docker-api-build
+	@echo "Running Black/Ruff/Mypy inside $(DOCKER_API_IMAGE)"
+	$(DOCKER) run --rm \
+		-e TP_API_ENV=$(API_ENV) \
+		-e TP_API_DUCKDB_PATH=$(if $(API_DUCKDB_PATH),$(API_DUCKDB_PATH),/app/data/prod.duckdb) \
+		-e TP_API_DUCKDB_SCHEMA=$(API_DUCKDB_SCHEMA) \
+		-e TP_API_DUCKDB_READ_ONLY=$(API_DUCKDB_READ_ONLY) \
+		-e TP_API_DB_BACKEND=$(API_DB_BACKEND) \
+		-e TP_API_DB_POOL_SIZE=$(API_DB_POOL_SIZE) \
+		-e TP_API_DB_POOL_TIMEOUT=$(API_DB_POOL_TIMEOUT) \
+		-e TP_API_LOG_LEVEL=$(API_LOG_LEVEL) \
+		$(DOCKER_API_IMAGE) \
+		bash -c "poetry --directory tp_api_project run black --check app tests && poetry --directory tp_api_project run ruff check && poetry --directory tp_api_project run mypy app"
+
+docker-api-fix: docker-api-build
+	@echo "Running formatter fixes inside $(DOCKER_API_IMAGE)"
+	$(DOCKER) run --rm \
+		-e TP_API_ENV=$(API_ENV) \
+		-e TP_API_DUCKDB_PATH=$(if $(API_DUCKDB_PATH),$(API_DUCKDB_PATH),/app/data/prod.duckdb) \
+		-e TP_API_DUCKDB_SCHEMA=$(API_DUCKDB_SCHEMA) \
+		-e TP_API_DUCKDB_READ_ONLY=$(API_DUCKDB_READ_ONLY) \
+		-e TP_API_DB_BACKEND=$(API_DB_BACKEND) \
+		-e TP_API_DB_POOL_SIZE=$(API_DB_POOL_SIZE) \
+		-e TP_API_DB_POOL_TIMEOUT=$(API_DB_POOL_TIMEOUT) \
+		-e TP_API_LOG_LEVEL=$(API_LOG_LEVEL) \
+		$(DOCKER_API_IMAGE) \
+		bash -c "poetry --directory tp_api_project run black app tests && poetry --directory tp_api_project run ruff check --fix"
 
 docker-api-serve:
 	@echo "Cleaning up existing API container (if any)"
