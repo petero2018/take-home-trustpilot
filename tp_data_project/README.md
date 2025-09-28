@@ -1,15 +1,63 @@
-Welcome to your new dbt project!
+# Trustpilot Take-Home – dbt Project
 
-### Using the starter project
+dbt models that ingest raw Trustpilot review CSVs into DuckDB and build curated layers consumed by the API service.
 
-Try running the following commands:
-- dbt run
-- dbt test
+## Setup
 
+```bash
+poetry --directory tp_data_project env use 3.13.7
+poetry --directory tp_data_project install
+```
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+The local dbt profile lives in `local_dbt_profiles/profiles.yml` and resolves DuckDB paths from environment variables:
+
+- `TP_DBT_DEV_PATH` – defaults to `../data/dev.duckdb`
+- `TP_DBT_PROD_PATH` – defaults to `../data/prod.duckdb`
+- `TP_DBT_DEFAULT_TARGET` – fallback target for container usage (defaults to `prod`)
+
+## Common Commands
+
+```bash
+poetry --directory tp_data_project run dbt seed                 # load csv seeds into DuckDB
+poetry --directory tp_data_project run dbt build --target dev
+poetry --directory tp_data_project run dbt build --target prod
+poetry --directory tp_data_project run dbt test --target dev
+```
+
+From the repository root the Makefile mirrors these flows:
+
+```bash
+make install-data
+make dbt-build                               # default target=dev
+make DBT_TARGET=prod dbt-test
+```
+
+## Documentation
+
+```bash
+poetry --directory tp_data_project run dbt docs generate
+poetry --directory tp_data_project run dbt docs serve --port 8001
+```
+
+Visit http://127.0.0.1:8001 to browse the model catalog and lineage graph.
+
+## Container Workflow
+
+```bash
+make docker-data-build
+make docker-data-shell                # disposable shell with dbt installed
+make docker-data-login                # reusable container rooted at /app/tp_data_project
+```
+
+Override DuckDB paths at runtime:
+
+```bash
+TP_DBT_PROD_PATH=/mnt/shared/prod.duckdb make DBT_TARGET=prod dbt-build
+```
+
+## Future Modelling Roadmap
+
+- Medallion architecture: bronze (raw ingests) → silver (clean, conformed) → gold (analytics data sets).
+- Semantic layer defining business metrics exposed to the API or BI tools.
+- Data quality tests for freshness, nulls, and referential integrity to support production SLAs.
+
