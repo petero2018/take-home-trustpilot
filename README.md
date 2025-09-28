@@ -23,15 +23,15 @@ Both projects share the DuckDB file in `data/` and are containerised for easy CI
 2. Follow project-specific setup in the linked READMEs.  
 3. Use the Makefile helpers from the repo root:
 
+The flow mirrors how you would approach local development: install both Poetry environments once, validate the API (lint + unit tests), validate the dbt project (SQLFluff + build against the default dev target), then containerise and serve the API. Each command is optional on its own, but running them in order gives you a clean, verified starting point before you open Swagger or run downstream analyses.
+
+
    ```bash
    make install-api install-data
    make api-lint api-test
    make data-lint dbt-build
    make docker-api-serve
   ```
-
-
-The flow mirrors how you would approach local development: install both Poetry environments once, validate the API (lint + unit tests), validate the dbt project (SQLFluff + build against the default dev target), then containerise and serve the API. Each command is optional on its own, but running them in order gives you a clean, verified starting point before you open Swagger or run downstream analyses.
 
 
 
