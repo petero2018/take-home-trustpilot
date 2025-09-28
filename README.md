@@ -6,6 +6,7 @@ This take-home delivers two cooperating services that expose Trustpilot review d
 - **[tp_data_project](tp_data_project/README.md)** – dbt project that models raw data into API-ready tables.
 
 Both projects share the DuckDB file in `data/` and are containerised for easy CI/CD integration.
+In production, as the database will be hosted on cloud/other infrastructure, I'd split the two projects so dedicated repository to host the api and data rather than a monolith.
 
 ## How the brief is addressed
 
