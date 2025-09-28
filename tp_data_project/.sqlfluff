@@ -1,0 +1,11 @@
+[sqlfluff]
+dialect = duckdb
+templater = dbt
+max_line_length = 120
+
+[templater.dbt]
+project_dir = .
+profiles_dir = local_dbt_profiles
+
+[paths]
+exclude = ["target/", "logs/", "dbt_packages/"]

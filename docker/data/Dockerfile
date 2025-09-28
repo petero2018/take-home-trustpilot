@@ -30,6 +30,9 @@ COPY tp_data_project/pyproject.toml tp_data_project/poetry.lock* ./tp_data_proje
 
 ENV DBT_PROFILES_DIR=/app/tp_data_project/local_dbt_profiles
 
+# Ensure the lock file matches dependencies (regenerate on mismatch)
+RUN poetry --directory tp_data_project lock --no-update || poetry --directory tp_data_project lock
+
 # Install data project dependencies
 RUN poetry --directory tp_data_project install --no-root
 

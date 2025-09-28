@@ -26,24 +26,25 @@ TP_DBT_DEFAULT_TARGET ?= prod
 .DEFAULT_GOAL := help
 SHELL := bash
 
-.PHONY: help install-api install-data api-serve api-test dbt-build dbt-test dbt-docs docker-data-build docker-data-shell docker-data-login docker-api-build docker-api-serve docker-api-shell
+.PHONY: help install-api install-data api-serve api-test api-lint dbt-build dbt-test dbt-docs data-lint data-fix docker-data-build docker-data-shell docker-data-login docker-data-lint docker-data-fix docker-api-build docker-api-serve docker-api-shell
 
 help:
 	@echo "Available targets:"
-	
 	@echo "  install-api            Install API project dependencies"
 	@echo "  api-serve              Run FastAPI (override with API_ENV=dev, etc.)"
 	@echo "  api-test               Run tp_api_project test suite"
-
+	@echo "  api-lint               Run Ruff lint checks for tp_api_project"
 	@echo "  install-data           Install dbt project dependencies"
 	@echo "  dbt-build              Run dbt build (override DBT_TARGET=prod)"
 	@echo "  dbt-test               Run dbt test (override DBT_TARGET=prod)"
 	@echo "  dbt-docs               Generate + serve dbt docs (DBT_DOCS_PORT=...)"
-
+	@echo "  data-lint              Run SQLFluff linting for tp_data_project"
+	@echo "  data-fix               Auto-fix SQLFluff issues for tp_data_project"
 	@echo "  docker-data-build      Build the dbt Docker image"
 	@echo "  docker-data-shell      Run an interactive shell in the dbt image"
 	@echo "  docker-data-login      Run/reuse a named dbt container"
-
+	@echo "  docker-data-lint       Run SQLFluff inside the dbt Docker image"
+	@echo "  docker-data-fix        Auto-fix SQLFluff issues inside the dbt Docker image"
 	@echo "  docker-api-build       Build the API Docker image"
 	@echo "  docker-api-serve       Run the API image (bind to port 8000)"
 	@echo "  docker-api-shell       Run an interactive shell in the API image"
@@ -68,6 +69,10 @@ api-serve:
 api-test:
 	$(POETRY) --directory tp_api_project run pytest
 
+api-lint:
+	$(POETRY) --directory tp_api_project run ruff check
+	$(POETRY) --directory tp_api_project run ruff format --check
+
 dbt-build:
 	$(POETRY) --directory tp_data_project run dbt build --target $(DBT_TARGET)
 
@@ -77,6 +82,12 @@ dbt-test:
 dbt-docs:
 	$(POETRY) --directory tp_data_project run dbt docs generate
 	$(POETRY) --directory tp_data_project run dbt docs serve --port $(DBT_DOCS_PORT)
+
+data-lint:
+	$(POETRY) --directory tp_data_project run sqlfluff lint models
+
+data-fix:
+	$(POETRY) --directory tp_data_project run sqlfluff fix models
 
 docker-data-build:
 	@echo "Building data image $(DOCKER_DATA_IMAGE)"
@@ -108,6 +119,22 @@ docker-data-login:
 		-e TP_DBT_DEFAULT_TARGET=$(TP_DBT_DEFAULT_TARGET) \
 		$(DOCKER_DATA_IMAGE) \
 		bash -c "cd /app/tp_data_project && exec bash"
+
+docker-data-lint: docker-data-build
+	@echo "Running SQLFluff lint inside $(DOCKER_DATA_IMAGE)"
+	$(DOCKER) run --rm \
+		-e TP_DBT_DEV_PATH=$(TP_DBT_DEV_PATH) \
+		-e TP_DBT_PROD_PATH=$(TP_DBT_PROD_PATH) \
+		$(DOCKER_DATA_IMAGE) \
+		poetry --directory tp_data_project run sqlfluff lint models
+
+docker-data-fix: docker-data-build
+	@echo "Running SQLFluff fix inside $(DOCKER_DATA_IMAGE)"
+	$(DOCKER) run --rm \
+		-e TP_DBT_DEV_PATH=$(TP_DBT_DEV_PATH) \
+		-e TP_DBT_PROD_PATH=$(TP_DBT_PROD_PATH) \
+		$(DOCKER_DATA_IMAGE) \
+		poetry --directory tp_data_project run sqlfluff fix models
 
 docker-api-build:
 	@echo "Building API image $(DOCKER_API_IMAGE)"

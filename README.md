@@ -25,8 +25,8 @@ Both projects share the DuckDB file in `data/` and are containerised for easy CI
 
    ```bash
    make install-api install-data
-   make api-test
-   make dbt-build
+   make api-lint api-test
+   make data-lint dbt-build
    make docker-api-serve
    ```
 
@@ -56,5 +56,4 @@ Both projects share the DuckDB file in `data/` and are containerised for easy CI
 - `data/` – DuckDB files used by both projects.
 - `docker/` – Dockerfiles for API and dbt images.
 - `Makefile` – shortcuts for local development, testing, and container workflows.
-
 

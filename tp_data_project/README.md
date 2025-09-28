@@ -41,6 +41,20 @@ poetry --directory tp_data_project run dbt docs serve --port 8001
 
 Visit http://127.0.0.1:8001 to browse the model catalog and lineage graph.
 
+## Linting
+
+```bash
+poetry --directory tp_data_project run sqlfluff lint models
+poetry --directory tp_data_project run sqlfluff fix models
+# or from the repository root
+make data-lint
+make data-fix
+
+# via Docker with the baked image
+make docker-data-lint
+make docker-data-fix
+```
+
 ## Container Workflow
 
 ```bash
@@ -60,4 +74,3 @@ TP_DBT_PROD_PATH=/mnt/shared/prod.duckdb make DBT_TARGET=prod dbt-build
 - Medallion architecture: bronze (raw ingests) → silver (clean, conformed) → gold (analytics data sets).
 - Semantic layer defining business metrics exposed to the API or BI tools.
 - Data quality tests for freshness, nulls, and referential integrity to support production SLAs.
-

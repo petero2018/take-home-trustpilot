@@ -30,6 +30,9 @@ WORKDIR /app
 # Copy Poetry project definition first to leverage Docker layer caching
 COPY tp_api_project/pyproject.toml tp_api_project/poetry.lock* ./tp_api_project/
 
+# Ensure the lock file matches dependencies (regenerate on mismatch)
+RUN poetry --directory tp_api_project lock --no-update || poetry --directory tp_api_project lock
+
 # Install API project dependencies (without installing the project itself)
 RUN poetry --directory tp_api_project install --no-root
 

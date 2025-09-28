@@ -49,6 +49,15 @@ poetry --directory tp_api_project run pytest
 make api-test
 ```
 
+## Linting
+
+```bash
+poetry --directory tp_api_project run ruff check
+poetry --directory tp_api_project run ruff format --check
+# or from repo root
+make api-lint
+```
+
 ## Docker
 
 ```bash
@@ -64,4 +73,3 @@ make API_ENV=dev API_DUCKDB_PATH=/app/data/dev.duckdb docker-api-serve
 - Structured logging with request context helps trace upstream issues.
 - Health checks: `/healthz` returns `{ "status": "ok" }` and doubles as the baseline for uptime monitoring.
 - Connection pool exhaustion surfaces as HTTP 503 with actionable messaging, easing alerting hooks.
-
