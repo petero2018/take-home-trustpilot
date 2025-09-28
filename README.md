@@ -62,77 +62,36 @@ Both projects share the DuckDB file in `data/` and are containerised for easy CI
 
 ## Architecture Considerations
 
-This data project can be extended using a bronze–silver–gold layering approach, which is a common best practice for structuring modern data platforms.
-	•	Bronze Layer (Landing)
-The bronze layer is the raw landing zone where ingested data is first stored. At this stage, only basic data type conversions are applied. No business or technical transformations take place here. Instead, the focus is on:
-	•	Ensuring proper data types.
-	•	Applying fundamental quality checks (e.g., non-null enforcement).
-	•	Preserving the original fidelity of ingested data.
-In this PoC, we handled this layer with dbt seeds. In production, data ingestion into the bronze layer would typically occur through batch ingestion, streaming pipelines, or other ingestion services.
-	•	Silver Layer (Refinement)
-The silver layer is where technical transformations are applied to make the data usable for downstream modeling. This includes:
-	•	Deduplication.
-	•	Normalization and denormalization.
-	•	Identity management.
-	•	Unions and joins.
-In this layer, the data is standardized and technically prepared for business consumption.
-	•	Gold Layer (Business Models)
-The gold layer contains business-facing models, primarily fact and dimension tables.
-	•	Dimension tables: contain reference data, often designed as slowly changing dimensions with unique keys.
-	•	Fact tables: contain event or transaction-level data, typically high-volume, keyed for efficient joins with dimensions.
-	•	Both fact and dimension tables often include “current flags” to indicate the active record in a given context, while still enabling historical analysis.
-	•	Semantic Layer (Optional, as maturity grows)
-As organizational data maturity increases, a semantic layer can be introduced on top of the gold layer. This layer encapsulates additional business logic on metrics and semantics, further reinforcing the “single source of truth” concept.
-Data from the semantic or gold layer can be:
-	•	Exposed to BI or analytics tools.
-	•	Served through APIs (e.g., the FastAPI solution in this project).
-	•	Distributed to external applications via reverse ETL tools or processes.
+Treat the dbt project as the spine of the analytics platform. New data lands in bronze, is scrubbed and stitched together in silver, then graduates to gold once it carries business-ready facts and dimensions. A thin semantic layer on top tells the story in business language, powering BI dashboards and the FastAPI endpoints alike.
+
+Trust is earned through documentation and guardrails. Automated freshness, uniqueness, and accepted-value tests catch drift before it hits downstream stakeholders. Rich column descriptions and dbt exposures spell out who depends on the certified `crt_tp_reviews` model, so the blast radius of a change is obvious in `dbt docs`.
+
+The architecture already mirrors the warehouses we might adopt next. Materialisations line up with BigQuery/Snowflake best practices (surrogate keys, conformed dims, incremental logic), so scaling out is more about configuration than code rewrites. Late-arriving data handling and partition-friendly keys keep runtime predictable as volumes climb.
+
+Quality stays high because we layer in unit tests, data contracts, and semantic-layer metric checks while SQLFluff keeps the codebase readable. When it’s time to trim runtime or spend, state-aware runs (`dbt build --select state:modified+`), off-peak scheduling, and archival jobs keep the warehouse bill honest.
 
 ## Technology and Deployment Considerations
 
-At present, the dbt project is written so that it can be run either with or without tests. Looking ahead, the project can be extended with CI/CD practices to ensure reliable, cost-efficient, and standards-compliant deployments.
-	•	Separation of Projects
-As noted earlier, the data project and API project are best maintained in separate repositories. This separation makes it easier to design focused CI/CD pipelines for each.
-	•	Deployment Flow
-The dbt project can be deployed by running a single dbt build, which executes all models along with their associated tests. In CI/CD pipelines, this can be optimized further:
-	•	Selective model execution: generate a manifest file from production, and in CI/CD only run models that have changed (--defer and --select state:modified).
-	•	This ensures that only the relevant models are rebuilt and tested, reducing runtime and cost.
-	•	Testing in CI/CD
-	•	Pre-materialization checks: run SQLFluff with the agreed configuration to enforce SQL style and dbt coding standards.
-	•	Post-materialization checks: run dbt test or dbt build on the changed models to validate integration and data quality after materialization.
-	•	Environments and Targets
-CI/CD pipelines can manage dbt targets (e.g. dev, prod) to control where data is materialized.
-	•	Local development can materialize to a development schema.
-	•	Production materialization should use a dedicated operational schema.
-	•	In production, DuckDB will be replaced by a warehouse engine such as Google BigQuery (or an equivalent supported by dbt).
+In production the dbt code ships as a container. CI builds the image, runs `sqlfluff lint` and `dbt build --select state:modified+`, publishes docs artefacts, and pushes to Artifact Registry. Cloud Composer (Airflow) then pulls that image into a DAG so bronze→silver→gold becomes just another batch task with quality checks baked in. Separate repos keep API and data pipelines clean; Terraform wires secrets/env vars.
 
+Observability is part of the pipeline: dbt run results land in Cloud Monitoring or BigQuery for trend analysis, and PagerDuty notifications fire when success rates dip. Exposures mean the API team knows immediately if their upstream model failed. Knowledge sharing keeps pace via gated `dbt docs`, architecture diagrams in git, and quick Loom walkthroughs. As maturity grows we integrate with a catalogue (e.g., DataHub) and schedule access reviews for PII-heavy models so compliance stays ahead of audits.
 
 # Future API Project
 
-
 ## Architecture Considerations
 
+The API matures into a layered service. The HTTP layer owns transport, a service layer encodes business rules, and persistence adapters know how to talk to DuckDB today and BigQuery tomorrow. That separation makes it painless to add caching (Redis, CDN-backed CSV downloads), better pagination (keyset over offset), or even new response formats (JSON, Parquet) without retooling the whole app.
+
+Reliability is non-negotiable: we define SLOs (P95 <1s, <1% 5xx), add `/healthz/deep` checks that hit the database, and design graceful fallbacks like cached responses or Retry-After headers when the warehouse is busy. Security keeps pace via OAuth2/JWT, WAF and rate limiting, mTLS between services, and schema-level RBAC once the warehouse lives in BigQuery.
+
+Performance and cost stay balanced by sticking with streaming CSV as the default but offering asynchronous exports for large pulls. We run on scale-to-zero platforms (Cloud Run) so idle time costs cents, and we benchmark pool sizing before scaling horizontally. CDN caching and Cloud Armor rules tame egress and DDoS risk.
+
+Quality is enforced through contract tests (Schemathesis against the OpenAPI schema), integration tests with ephemeral DuckDB instances, and smoke tests in CI. FastAPI keeps consumer docs fresh via `/docs`, while ADRs capture the why behind choices like CSV-first or pool tuning so newcomers can come up to speed quickly.
 
 ## Technology and Deployment Considerations
 
-As noted previously, keeping the API project in a separate repository allows CI/CD pipelines to be managed much more efficiently than in a single monorepo.
-
-
-	•	CI/CD Pipeline Flow
-      1.	Linting & Style Checks
-         •	Run code linting tools (e.g. Black, Ruff) and any additional configured checks.
-         •	Ensures that all changes adhere to repository standards and coding conventions.
-      2.	Unit Tests with Coverage
-         •	Execute the unit test suite, including tests with mock data for API endpoints.
-         •	Enforce a minimum coverage threshold to ensure that pull requests are adequately tested.
-      3.	Containerization
-         •	Build the application into a Docker container if all linting and tests succeed.
-         •	The container provides a consistent runtime environment across environments.
-      4.	Deployment
-         •	Deploy the container to a cloud hosting service such as Google Cloud Run.
-         •	Containers can be stored and versioned in Google Container Registry (GCR) or Artifact Registry.
-         •	This provides a straightforward path from tested code to production API deployment.
-	•	Security, Monitoring, and Alerting
-      •	Google Cloud provides built-in services for security scans of containers before deployment.
-      •	Monitoring and alerting can be configured through GCP’s native tooling (e.g. Cloud Monitoring, Cloud Logging).
-      •	These services enable visibility into API health, performance, and error rates.
+- CI/CD stages: `make api-lint` (Black/Ruff/Mypy) → `make api-test` with coverage gates → build Docker image → vulnerability scan (GCP Artifact Analysis) → deploy to Cloud Run via CLI run within CI/CD process.
+- Config management: centralise env vars in Secret Manager, inject via Cloud Run revisions, and attach workload identity so the API reads warehouse creds without long-lived keys.
+- Monitoring & alerting: instrument with OpenTelemetry; export traces/metrics to Cloud Monitoring or Datadog; set alerts for latency spikes, pool exhaustion, and elevated 4xx/5xx rates.
+- Documentation sharing: keep developer docs in MkDocs or README, rely on FastAPI’s `/docs` for consumers, and link runbooks/playbooks from alert notifications.
+- Production hardening: rate limiting (API Gateway/Cloud Endpoints), automated DDoS protection, request/response payload logging with PII masking, and chaos drills to validate failover plans.
